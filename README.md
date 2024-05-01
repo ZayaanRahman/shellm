@@ -1,2 +1,2 @@
 # shellm
- > llm powered terminal assistant
+llm powered terminal assistant
