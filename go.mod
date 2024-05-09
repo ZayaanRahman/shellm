@@ -1,3 +1,3 @@
-module github.com/ZayaanRahman/gpterminal
+module github.com/ZayaanRahman/shellm
 
 go 1.22.2

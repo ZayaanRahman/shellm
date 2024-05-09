@@ -5,91 +5,37 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
-	"unicode/utf8"
 )
 
+// Reflects fields in "config.json"
 type Config struct {
 	Model  string `json:"model"`
 	Key    string `json:"key"`
 	Prompt string `json:"prompt"`
+	Os     string `json:"os"`
 }
 
-func updateConfig(args []string) {
-
-	var curConfig Config
-
-	json.Unmarshal(readFile(), &curConfig)
-
-	newConfig := Config{Model: curConfig.Model, Key: curConfig.Key, Prompt: curConfig.Prompt}
-
-	for _, arg := range args {
-
-		indexEq := strings.IndexRune(arg, '=')
-
-		if utf8.RuneCountInString(arg) >= 2 && arg[0:2] != "--" {
-			fmt.Println(`Options must begin with "--".`)
-
-		} else if indexEq == -1 || indexEq == 0 || indexEq == utf8.RuneCountInString(arg)-1 {
-			fmt.Println(`Must set option name equal "=" to new setting. For example:
-gpterminal key=ABCDEF`)
-
-		} else {
-
-			option := arg[2:indexEq]
-			newStr := arg[indexEq+1 : utf8.RuneCountInString(arg)]
-
-			switch option {
-
-			case "model":
-				// temp until more models added
-				if newStr != "gpt4" {
-					fmt.Println("Model name is invalid")
-				}
-
-			case "key":
-
-				newConfig.Key = newStr
-			// case "prompt":
-
-			// 	// temp until figure out better way to edit
-			// 	fmt.Println("Model name is invalid")
-			default:
-
-				fmt.Println("Invalid option")
-			}
-		}
-	}
-
-	file, err := os.Create("config.json")
-
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	defer file.Close()
-
-	newJson, err := json.Marshal(newConfig)
-
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	_, err = file.Write(newJson)
-
-	if err != nil {
-		fmt.Println(err.Error())
+// Returns a config with default settings
+func DefaultConfig() Config {
+	return Config{
+		Model:  "gpt-3.5-turbo",
+		Key:    "",
+		Prompt: "You are a ChatGPT assistant meant to help users navigate and learn their command line interface for the Windows operating system. Your goal is to provide the user with the most appropriate information about what commands to use in their terminal to accomplish some task, based on their query. Users will enter queries, usually asking about what command to use to do something with their operating system or use some command line tool. Try to limit your responses to around 50 characters, telling them succinctly which terminal command to use. Again, try to keep the responses short so they fit on one line. If the user asks about something unrelated to the terminal, you can give them a longer response that spans multiple lines. Or, if they want to do something complicated that would take multiple commands, you may use multiple lines to tell them how to accomplish what they want. Still, try to keep it short. Be brief, especially when asnwering questions about terminal commands. Prioritize correctness and brevity.",
+		Os:     "Windows",
 	}
 }
 
-func readFile() []byte {
+// Get a configuration object reflecting the current "config.json" file
+func getConfig() Config {
 
 	file, err := os.Open("config.json")
 
 	if err != nil {
 
 		if os.IsNotExist(err) {
-			fmt.Println("Config file could not be found.")
+			fmt.Print("Creating config file...")
+			updateConfig(DefaultConfig()) // create a default "config.json" if it doesn't yet exist
+			fmt.Println("done")
 		} else {
 			fmt.Println(err.Error())
 		}
@@ -102,5 +48,23 @@ func readFile() []byte {
 		fmt.Println(err.Error())
 	}
 
-	return data
+	curConfig := Config{}
+	json.Unmarshal(data, &curConfig)
+	return curConfig
+}
+
+// Update the "config.json" file with a new configuration object
+func updateConfig(config Config) {
+
+	data, err := json.Marshal(config)
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	err = os.WriteFile("config.json", data, 0644)
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 }

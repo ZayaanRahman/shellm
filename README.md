@@ -1,2 +1,2 @@
 # gpterminal
- gpt powered terminal assistance
+ llm powered terminal assistant
