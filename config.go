@@ -35,6 +35,12 @@ func getConfig() Config {
 		if os.IsNotExist(err) {
 			fmt.Print("Creating config file...")
 			updateConfig(DefaultConfig()) // create a default "config.json" if it doesn't yet exist
+			file, err = os.Open("config.json")
+
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+
 			fmt.Println("done")
 		} else {
 			fmt.Println(err.Error())
